@@ -16,21 +16,23 @@ from app.routes import (
     upload_routes,
     enquiry_routes,
     about_routes,
-    package_batch_routes,
-    policy_routes
+    package_batch_routes,   
+    policy_routes,
+    hero_routes,
+    seasoned_routes
 )
 
-# create tables (use Alembic migrations in production instead)
-#Base.metadata.create_all(bind=engine)
+
+# Development/simple deployment approach.
+# In production, prefer Alembic migrations.
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Travel Website API")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-         "https://on-a-trip-holidays.vercel.app",
-        "https://onatripholidays.com",
-        "https://www.onatripholidays.com",
+        "http://localhost:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -54,7 +56,8 @@ app.include_router(upload_routes.router)
 app.include_router(enquiry_routes.router)
 app.include_router(about_routes.router)
 app.include_router(policy_routes.router)
-
+app.include_router(hero_routes.router)
+app.include_router(seasoned_routes.router)
 
 @app.get("/health")
 def health():

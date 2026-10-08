@@ -10,14 +10,15 @@ def send_password_reset_email(
 ) -> None:
     message = EmailMessage()
 
-    message["Subject"] = "OnaTrip - Password Reset Verification Code"
+    message["Subject"] = "Manyara Prive Vacations - Password Reset Verification Code"
     message["From"] = settings.EMAIL_FROM
     message["To"] = recipient_email
 
-    message.set_content(f"""
+    message.set_content(
+        f"""
 Hello,
 
-We received a request to reset your OnaTrip account password.
+We received a request to reset your Manyara Prive Vacations account password.
 
 Your password reset verification code is:
 
@@ -30,8 +31,9 @@ If you did not request a password reset, please ignore this email.
 For security reasons, do not share this code with anyone.
 
 Regards,
-OnaTrip Team
-""".strip())
+Manyara Prive Vacations Team
+""".strip()
+    )
 
     with smtplib.SMTP(
         settings.SMTP_HOST,

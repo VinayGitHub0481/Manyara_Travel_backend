@@ -5,7 +5,9 @@ from app.db.database import get_db
 from app.schemas.user import UserCreate, UserLogin, UserOut, Token
 from app.services import auth_service
 from app.core.deps import get_current_user, require_admin
-from app.models.user import User
+from app.models.user import User,RoleEnum
+
+from datetime import datetime,timezone 
 
 from app.schemas.password_reset import (
     ForgotPasswordRequest,
@@ -35,9 +37,24 @@ def register(
 
 
 @router.post("/login", response_model=Token)
-def login(payload: UserLogin, db: Session = Depends(get_db)):
+def login(
+    payload: UserLogin,
+    db: Session = Depends(get_db),
+):
     user, token = auth_service.authenticate_user(db, payload)
-    return Token(access_token=token, user=UserOut.model_validate(user))
+
+    # Start the 30-minute inactivity period
+    if user.role in (RoleEnum.admin, RoleEnum.creator):
+        user.last_activity_at = datetime.now(timezone.utc)
+
+        db.commit()
+        db.refresh(user)
+
+    return Token(
+        access_token=token,
+        user=UserOut.model_validate(user),
+    )
+
 
 
 @router.get("/me", response_model=UserOut)
@@ -98,3 +115,6 @@ def reset_password_endpoint(
     )
 
     return {"message": "Password reset successfully."}
+
+
+

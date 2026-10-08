@@ -40,6 +40,12 @@ class SiteSettingsUpdate(BaseModel):
     top_bar_social_2_name: Optional[str] = None
     top_bar_social_2_url: Optional[str] = None
 
+    top_bar_social_3_name: Optional[str] = None
+    top_bar_social_3_url:  Optional[str] = None
+
+    top_bar_social_4_name: Optional[str] = None
+    top_bar_social_4_url:  Optional[str] = None
+
     # ============================================================
     # Contact information
     # ============================================================
@@ -84,6 +90,12 @@ class SiteSettingsOut(BaseModel):
 
     top_bar_social_2_name: Optional[str]
     top_bar_social_2_url: Optional[str]
+
+    top_bar_social_3_name: Optional[str] = None
+    top_bar_social_3_url:  Optional[str] = None
+    
+    top_bar_social_4_name: Optional[str] = None
+    top_bar_social_4_url:  Optional[str] = None
 
     # ============================================================
     # Contact information

@@ -1,3 +1,5 @@
+
+
 from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -11,8 +13,8 @@ class EnquiryCreate(BaseModel):
         gt=0,
     )
 
-    # Specific batch/trip the user is enquiring about (optional).
-    batch_id: int | None = Field(
+    # Specific seasoned/trip the user is enquiring about (optional).
+    seasoned_id: int | None = Field(
         default=None,
         gt=0,
     )
@@ -60,8 +62,20 @@ class EnquiryCreate(BaseModel):
 
         return v.strip()
 
-    # Number of travellers.
-    travellers: int = Field(
+    # Number of adults.
+    adults: int = Field(
+        ...,
+        ge=1,
+    )
+
+    # Number of kids.
+    kids: int = Field(
+        default=0,
+        ge=0,
+    )
+
+    # Number of nights.
+    nights: int = Field(
         ...,
         ge=1,
     )
@@ -83,7 +97,7 @@ class EnquiryResponse(BaseModel):
 
     package_id: int | None = None
 
-    batch_id: int | None = None
+    seasoned_id: int | None = None
 
     package_type: str
 
@@ -97,7 +111,11 @@ class EnquiryResponse(BaseModel):
 
     phone: str
 
-    travellers: int
+    adults: int
+
+    kids: int
+
+    nights: int
 
     travel_date: date
 

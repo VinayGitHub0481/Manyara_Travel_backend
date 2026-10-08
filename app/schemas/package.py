@@ -1,6 +1,5 @@
 
 
-
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
@@ -80,13 +79,20 @@ class PackageCreate(BaseModel):
 
     # Kept for backward compatibility / display.
     # Backend should derive this from destination_id.
-    destination: str = Field(
+    destination:Optional[str] = Field(
+        default=None,
         min_length=2,
         max_length=150,
     )
 
     # Authoritative relationship to most_visited.id
-    destination_id: int = Field(
+    destination_id: Optional[int] = Field(
+        gt=0,
+    )
+
+    # Optional relationship to seasoned_destinations.id
+    seasoned_destination_id: Optional[int] = Field(
+        default=None,
         gt=0,
     )
 
@@ -110,10 +116,15 @@ class PackageCreate(BaseModel):
     # ---------------------------------------------------------
 
     is_popular: bool = False
+
     is_recommended: bool = False
+
     is_trending: bool = False
+
     is_featured: bool = False
+
     is_new: bool = False
+
     is_most_visited: bool = False
 
     # ---------------------------------------------------------
@@ -227,6 +238,12 @@ class PackageUpdate(BaseModel):
         gt=0,
     )
 
+    # Optional relationship to seasoned_destinations.id
+    seasoned_destination_id: Optional[int] = Field(
+        default=None,
+        gt=0,
+    )
+
     # ---------------------------------------------------------
     # Package classification
     # ---------------------------------------------------------
@@ -247,10 +264,15 @@ class PackageUpdate(BaseModel):
     # ---------------------------------------------------------
 
     is_popular: Optional[bool] = None
+
     is_recommended: Optional[bool] = None
+
     is_trending: Optional[bool] = None
+
     is_featured: Optional[bool] = None
+
     is_new: Optional[bool] = None
+
     is_most_visited: Optional[bool] = None
 
     # ---------------------------------------------------------
@@ -331,6 +353,7 @@ class PackageUpdate(BaseModel):
 # PACKAGE OUTPUT
 # =========================================================
 
+
 class PackageOut(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,
@@ -347,11 +370,13 @@ class PackageOut(BaseModel):
     slug: str
 
     # Existing display / compatibility field
-    destination: str
+    destination: Optional[str]
 
     # Authoritative relationship to most_visited.id
-    # Database column is NOT NULL.
-    destination_id: int
+    destination_id: Optional[int]
+
+    # Optional relationship to seasoned_destinations.id
+    seasoned_destination_id: Optional[int] = None
 
     # ---------------------------------------------------------
     # Package classification
@@ -370,10 +395,15 @@ class PackageOut(BaseModel):
     # ---------------------------------------------------------
 
     is_popular: bool
+
     is_recommended: bool
+
     is_trending: bool
+
     is_featured: bool
+
     is_new: bool
+
     is_most_visited: bool
 
     # ---------------------------------------------------------
@@ -383,6 +413,7 @@ class PackageOut(BaseModel):
     price: Decimal
 
     duration_days: int
+
     duration_nights: int
 
     # ---------------------------------------------------------
@@ -474,354 +505,3 @@ class PackageOut(BaseModel):
 
 
 
-
-
-
-
-
-
-
-# from datetime import datetime
-# from decimal import Decimal
-# from enum import Enum
-# from typing import Optional
-
-# from pydantic import BaseModel, Field, ConfigDict
-
-
-# class StatusEnum(str, Enum):
-#     draft = "draft"
-#     published = "published"
-
-
-# class PackageTypeEnum(str, Enum):
-#     pilgrimage = "pilgrimage"
-#     mountains_adventure = "mountains_adventure"
-#     romantic = "romantic"
-#     international = "international"
-#     beach = "beach"
-#     family = "family"
-#     wildlife_nature = "wildlife_nature"
-
-
-# class ItineraryItem(BaseModel):
-#     day: int
-#     title: str
-#     description: str
-#     image: Optional[str] = None
-
-
-# class ImageObject(BaseModel):
-#     """Matches what /uploads/image returns and what ImageUploadField.jsx stores."""
-
-#     url: str
-#     public_id: Optional[str] = None
-
-
-# class PackageCreate(BaseModel):
-#     # ---------------------------------------------------------
-#     # Basic package information
-#     # ---------------------------------------------------------
-
-#     title: str = Field(
-#         min_length=3,
-#         max_length=200,
-#     )
-
-#     # Keep temporarily for compatibility/display.
-#     # Backend should derive this from destination_id.
-#     destination: str = Field(
-#         min_length=2,
-#         max_length=150,
-#     )
-
-#     # NEW: authoritative relationship
-#     destination_id: int = Field(
-#         gt=0,
-#     )
-
-#     # ---------------------------------------------------------
-#     # Package classification
-#     # ---------------------------------------------------------
-
-#     package_type: PackageTypeEnum = PackageTypeEnum.family
-
-#     display_order: int = Field(
-#         default=0,
-#         ge=0,
-#     )
-
-#     # ---------------------------------------------------------
-#     # Package discovery / collection flags
-#     # ---------------------------------------------------------
-
-#     is_popular: bool = False
-#     is_recommended: bool = False
-#     is_trending: bool = False
-#     is_featured: bool = False
-#     is_new: bool = False
-#     is_most_visited: bool = False
-
-#     # ---------------------------------------------------------
-#     # Pricing & duration
-#     # ---------------------------------------------------------
-
-#     price: Decimal = Field(
-#         gt=0,
-#     )
-
-#     duration_days: int = Field(
-#         gt=0,
-#     )
-
-#     duration_nights: int = Field(
-#         default=0,
-#         ge=0,
-#     )
-
-#     # ---------------------------------------------------------
-#     # Content
-#     # ---------------------------------------------------------
-
-#     description: Optional[str] = None
-
-#     images: list[ImageObject] = Field(
-#         default_factory=list,
-#     )
-
-#     itinerary: list[ItineraryItem] = Field(
-#         default_factory=list,
-#     )
-
-#     # ---------------------------------------------------------
-#     # Package facilities
-#     # ---------------------------------------------------------
-
-#     facilities: list[str] = Field(
-#         default_factory=list,
-#     )
-
-#     # ---------------------------------------------------------
-#     # Package inclusions
-#     # ---------------------------------------------------------
-
-#     inclusions: list[str] = Field(
-#         default_factory=list,
-#     )
-
-#     # ---------------------------------------------------------
-#     # Package exclusions
-#     # ---------------------------------------------------------
-
-#     exclusions: list[str] = Field(
-#         default_factory=list,
-#     )
-
-#     # ---------------------------------------------------------
-#     # Package policies
-#     # ---------------------------------------------------------
-
-#     terms_and_conditions: Optional[str] = None
-
-#     cancellation_policy: Optional[str] = None
-
-#     # ---------------------------------------------------------
-#     # Publishing status
-#     # ---------------------------------------------------------
-
-#     status: StatusEnum = StatusEnum.draft
-
-
-# class PackageUpdate(BaseModel):
-#     # ---------------------------------------------------------
-#     # Basic package information
-#     # ---------------------------------------------------------
-
-#     title: Optional[str] = Field(
-#         default=None,
-#         min_length=3,
-#         max_length=200,
-#     )
-
-#     # Keep temporarily for compatibility.
-#     destination: Optional[str] = Field(
-#         default=None,
-#         min_length=2,
-#         max_length=150,
-#     )
-
-#     # NEW: authoritative relationship
-#     destination_id: Optional[int] = Field(
-#         default=None,
-#         gt=0,
-#     )
-
-#     # ---------------------------------------------------------
-#     # Package classification
-#     # ---------------------------------------------------------
-
-#     package_type: Optional[PackageTypeEnum] = None
-
-#     display_order: Optional[int] = Field(
-#         default=None,
-#         ge=0,
-#     )
-
-#     # ---------------------------------------------------------
-#     # Package discovery / collection flags
-#     # ---------------------------------------------------------
-
-#     is_popular: Optional[bool] = None
-#     is_recommended: Optional[bool] = None
-#     is_trending: Optional[bool] = None
-#     is_featured: Optional[bool] = None
-#     is_new: Optional[bool] = None
-#     is_most_visited: Optional[bool] = None
-
-#     # ---------------------------------------------------------
-#     # Pricing & duration
-#     # ---------------------------------------------------------
-
-#     price: Optional[Decimal] = Field(
-#         default=None,
-#         gt=0,
-#     )
-
-#     duration_days: Optional[int] = Field(
-#         default=None,
-#         gt=0,
-#     )
-
-#     duration_nights: Optional[int] = Field(
-#         default=None,
-#         ge=0,
-#     )
-
-#     # ---------------------------------------------------------
-#     # Content
-#     # ---------------------------------------------------------
-
-#     description: Optional[str] = None
-
-#     images: Optional[list[ImageObject]] = None
-
-#     itinerary: Optional[list[ItineraryItem]] = None
-
-#     # ---------------------------------------------------------
-#     # Package facilities
-#     # ---------------------------------------------------------
-
-#     facilities: Optional[list[str]] = None
-
-#     inclusions: Optional[list[str]] = None
-
-#     exclusions: Optional[list[str]] = None
-
-#     # ---------------------------------------------------------
-#     # Package policies
-#     # ---------------------------------------------------------
-
-#     terms_and_conditions: Optional[str] = None
-
-#     cancellation_policy: Optional[str] = None
-
-#     # ---------------------------------------------------------
-#     # Publishing status
-#     # ---------------------------------------------------------
-
-#     status: Optional[StatusEnum] = None
-
-
-# class PackageOut(BaseModel):
-#     model_config = ConfigDict(
-#         from_attributes=True,
-#     )
-
-#     # ---------------------------------------------------------
-#     # Basic package information
-#     # ---------------------------------------------------------
-
-#     id: int
-
-#     title: str
-
-#     slug: str
-
-#     # Existing display/compatibility field
-#     destination: str
-
-#     # NEW: actual destination relationship
-#     destination_id: int
-
-#     # ---------------------------------------------------------
-#     # Package classification
-#     # ---------------------------------------------------------
-
-#     package_type: PackageTypeEnum
-
-#     display_order: int
-
-#     # ---------------------------------------------------------
-#     # Package discovery / collection flags
-#     # ---------------------------------------------------------
-
-#     is_popular: bool
-#     is_recommended: bool
-#     is_trending: bool
-#     is_featured: bool
-#     is_new: bool
-#     is_most_visited: bool
-
-#     # ---------------------------------------------------------
-#     # Pricing & duration
-#     # ---------------------------------------------------------
-
-#     price: Decimal
-
-#     duration_days: int
-
-#     duration_nights: int
-
-#     # ---------------------------------------------------------
-#     # Content
-#     # ---------------------------------------------------------
-
-#     description: Optional[str]
-
-#     images: list[ImageObject]
-
-#     itinerary: list[ItineraryItem]
-
-#     # ---------------------------------------------------------
-#     # Package facilities
-#     # ---------------------------------------------------------
-
-#     facilities: list[str]
-
-#     inclusions: list[str]
-
-#     exclusions: list[str]
-
-#     # ---------------------------------------------------------
-#     # Package policies
-#     # ---------------------------------------------------------
-
-#     terms_and_conditions: Optional[str]
-
-#     cancellation_policy: Optional[str]
-
-#     # ---------------------------------------------------------
-#     # Publishing status
-#     # ---------------------------------------------------------
-
-#     status: StatusEnum
-
-#     # ---------------------------------------------------------
-#     # Metadata
-#     # ---------------------------------------------------------
-
-#     created_by: Optional[int]
-
-#     created_at: datetime
-
-#     updated_at: Optional[datetime] = None

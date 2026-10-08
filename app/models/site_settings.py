@@ -50,6 +50,11 @@ class SiteSettings(Base):
         nullable=True,
     )
 
+    top_bar_social_3_name = Column(String(80), nullable=True)
+    top_bar_social_3_url  = Column(String(500), nullable=True)
+    top_bar_social_4_name = Column(String(80), nullable=True)
+    top_bar_social_4_url  = Column(String(500), nullable=True)
+
     # Trust / traveller metric
     # Example: 5000+ successful travelers
     top_bar_traveller_text = Column(

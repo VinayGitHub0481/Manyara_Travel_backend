@@ -7,49 +7,68 @@ from app.core.security import hash_password, verify_password, create_access_toke
 
 
 def register_user(db: Session, payload: UserCreate) -> User:
-    existing = db.query(User).filter(User.email == payload.email).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    if payload.role == RoleEnum.admin:
-
-        if not payload.admin_verification_password:
-            raise HTTPException(
-                status_code=400, detail="Existing admin password is required"
-            )
-
-    existing_admin = (
+    existing = (
         db.query(User)
-        .filter(User.role == RoleEnum.admin, User.is_active == True)
+        .filter(User.email == payload.email)
         .first()
     )
 
-    if not existing_admin:
+    if existing:
         raise HTTPException(
             status_code=400,
-            detail="No existing admin account available for verification",
+            detail="Email already registered",
         )
 
-    if not verify_password(
-        payload.admin_verification_password, existing_admin.password_hash
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid existing admin password",
+    # =========================================================
+    # ADMIN REGISTRATION
+    # An existing active admin must authorize creation
+    # =========================================================
+    if payload.role == RoleEnum.admin:
+        if not payload.admin_verification_password:
+            raise HTTPException(
+                status_code=400,
+                detail="Existing admin password is required",
+            )
+
+        existing_admin = (
+            db.query(User)
+            .filter(
+                User.role == RoleEnum.admin,
+                User.is_active == True,
+            )
+            .first()
         )
 
+        if not existing_admin:
+            raise HTTPException(
+                status_code=400,
+                detail="No existing admin account available for verification",
+            )
+
+        if not verify_password(
+            payload.admin_verification_password,
+            existing_admin.password_hash,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid existing admin password",
+            )
+
+    # =========================================================
+    # CREATE USER
+    # =========================================================
     user = User(
         name=payload.name,
         email=payload.email,
         password_hash=hash_password(payload.password),
         role=payload.role,
     )
+
     db.add(user)
     db.commit()
     db.refresh(user)
 
     return user
-
 
 def authenticate_user(db: Session, payload: UserLogin) -> tuple[User, str]:
     user = db.query(User).filter(User.email == payload.email).first()

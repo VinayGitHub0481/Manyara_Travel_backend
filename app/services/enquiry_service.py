@@ -1,5 +1,6 @@
+
 from fastapi import HTTPException
-from sqlalchemy.orm import Session,joinedload
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.enquiry import Enquiry
 from app.models.package import Package
@@ -11,7 +12,6 @@ def create_enquiry(
     db: Session,
     enquiry_data: EnquiryCreate,
 ) -> Enquiry:
-
     # ---------------------------------------------------------
     # Validate selected package
     # ---------------------------------------------------------
@@ -19,7 +19,9 @@ def create_enquiry(
 
     if enquiry_data.package_id is not None:
         package = (
-            db.query(Package).filter(Package.id == enquiry_data.package_id).first()
+            db.query(Package)
+            .filter(Package.id == enquiry_data.package_id)
+            .first()
         )
 
         if not package:
@@ -29,32 +31,32 @@ def create_enquiry(
             )
 
     # ---------------------------------------------------------
-    # Validate selected batch if provided
+    # Validate selected seasoned/trip if provided
     # ---------------------------------------------------------
-    batch = None
+    seasoned = None
 
-    if enquiry_data.batch_id is not None:
-        batch = (
+    if enquiry_data.seasoned_id is not None:
+        seasoned = (
             db.query(PackageBatch)
-            .filter(PackageBatch.id == enquiry_data.batch_id)
+            .filter(PackageBatch.id == enquiry_data.seasoned_id)
             .first()
         )
 
-        if not batch:
+        if not seasoned:
             raise HTTPException(
                 status_code=404,
-                detail="Selected trip/batch not found.",
+                detail="Selected trip/seasoned not found.",
             )
 
-        # If a batch is selected, make sure it belongs
+        # If a seasoned/trip is selected, make sure it belongs
         # to the selected package.
         if (
             enquiry_data.package_id is not None
-            and batch.package_id != enquiry_data.package_id
+            and seasoned.package_id != enquiry_data.package_id
         ):
             raise HTTPException(
                 status_code=400,
-                detail="Selected batch does not belong to the selected package.",
+                detail="Selected trip does not belong to the selected package.",
             )
 
     # ---------------------------------------------------------
@@ -63,7 +65,6 @@ def create_enquiry(
     package_type = enquiry_data.package_type.strip().lower()
 
     if package_type == "custom":
-
         # Custom enquiries must not point to an existing package.
         if enquiry_data.package_id is not None:
             raise HTTPException(
@@ -91,7 +92,9 @@ def create_enquiry(
         # Normal package enquiry
         # -----------------------------------------------------
         destination = (
-            enquiry_data.destination.strip() if enquiry_data.destination else None
+            enquiry_data.destination.strip()
+            if enquiry_data.destination
+            else None
         )
 
     # ---------------------------------------------------------
@@ -99,14 +102,20 @@ def create_enquiry(
     # ---------------------------------------------------------
     enquiry = Enquiry(
         package_id=enquiry_data.package_id,
-        batch_id=enquiry_data.batch_id,
+        seasoned_id=enquiry_data.seasoned_id,
         package_type=package_type,
         destination=destination,
         name=enquiry_data.name.strip(),
         phone=enquiry_data.phone.strip(),
-        travellers=enquiry_data.travellers,
+        adults=enquiry_data.adults,
+        kids=enquiry_data.kids,
+        nights=enquiry_data.nights,
         travel_date=enquiry_data.travel_date,
-        message=(enquiry_data.message.strip() if enquiry_data.message else None),
+        message=(
+            enquiry_data.message.strip()
+            if enquiry_data.message
+            else None
+        ),
     )
 
     db.add(enquiry)
@@ -116,12 +125,15 @@ def create_enquiry(
     return enquiry
 
 
-
 def get_all_enquiries(
     db: Session,
 ):
     enquiries = (
         db.query(Enquiry)
+        .options(
+            joinedload(Enquiry.package),
+            joinedload(Enquiry.batch),
+        )
         .order_by(Enquiry.created_at.desc())
         .all()
     )
@@ -130,7 +142,7 @@ def get_all_enquiries(
         {
             "id": enquiry.id,
             "package_id": enquiry.package_id,
-            "batch_id": enquiry.batch_id,
+            "seasoned_id": enquiry.seasoned_id,
             "package_type": enquiry.package_type,
             "destination": enquiry.destination,
             "package_title": (
@@ -140,7 +152,9 @@ def get_all_enquiries(
             ),
             "name": enquiry.name,
             "phone": enquiry.phone,
-            "travellers": enquiry.travellers,
+            "adults": enquiry.adults,
+            "kids": enquiry.kids,
+            "nights": enquiry.nights,
             "travel_date": enquiry.travel_date,
             "message": enquiry.message,
             "created_at": enquiry.created_at,
@@ -150,17 +164,20 @@ def get_all_enquiries(
     ]
 
 
-
 def get_enquiry_by_id(
     db: Session,
     enquiry_id: int,
 ):
     return (
         db.query(Enquiry)
-        .options(joinedload(Enquiry.package))
+        .options(
+            joinedload(Enquiry.package),
+            joinedload(Enquiry.batch),
+        )
         .filter(Enquiry.id == enquiry_id)
         .first()
     )
+
 
 def delete_enquiry(
     db: Session,

@@ -1,19 +1,22 @@
+
+
 import enum
 
 from sqlalchemy import (
+    Boolean,
     Column,
+    DateTime,
+    Enum,
+    ForeignKey,
     Integer,
+    JSON,
+    Numeric,
     String,
     Text,
-    Numeric,
-    Enum,
-    DateTime,
-    ForeignKey,
-    JSON,
-    Boolean,
 )
-from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
 from app.db.database import Base
 
 
@@ -60,19 +63,47 @@ class Package(Base):
     # ---------------------------------------------------------
     # Destination
     # ---------------------------------------------------------
+    #
+    # A package belongs to EXACTLY ONE:
+    #
+    # 1. Normal destination
+    #       destination_id -> most_visited.id
+    #
+    # OR
+    #
+    # 2. Seasonal destination
+    #       seasoned_destination_id -> seasoned_destinations.id
+    #
+    # The service layer enforces this XOR rule.
+    #
+    # `destination` is retained for backward compatibility and
+    # display/filtering. It is NULL for seasonal packages.
+    # ---------------------------------------------------------
 
-    # Existing destination name.
-    # Keep this for backward compatibility and display/filtering.
     destination = Column(
         String(150),
-        nullable=False,
+        nullable=True,
         index=True,
     )
 
-    # New proper relationship to most_visited.id
     destination_id = Column(
         Integer,
-        ForeignKey("most_visited.id"),
+        ForeignKey(
+            "most_visited.id",
+            ondelete="RESTRICT",
+            onupdate="CASCADE",
+        ),
+        nullable=True,
+        index=True,
+    )
+
+    seasoned_destination_id = Column(
+        Integer,
+        ForeignKey(
+            "seasoned_destinations.id",
+            ondelete="SET NULL",
+            onupdate="CASCADE",
+        ),
         nullable=True,
         index=True,
     )
@@ -170,6 +201,7 @@ class Package(Base):
 
     description = Column(
         Text,
+        nullable=True,
     )
 
     # ---------------------------------------------------------
@@ -178,6 +210,7 @@ class Package(Base):
 
     images = Column(
         JSON,
+        nullable=True,
     )
 
     # ---------------------------------------------------------
@@ -186,6 +219,7 @@ class Package(Base):
 
     itinerary = Column(
         JSON,
+        nullable=True,
     )
 
     # ---------------------------------------------------------
@@ -254,6 +288,7 @@ class Package(Base):
     created_by = Column(
         Integer,
         ForeignKey("users.id"),
+        nullable=True,
     )
 
     # ---------------------------------------------------------
@@ -263,6 +298,7 @@ class Package(Base):
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
+        nullable=False,
     )
 
     updated_at = Column(
@@ -278,12 +314,29 @@ class Package(Base):
         "User",
     )
 
-    # SQLAlchemy relationship to most_visited
-    # (defined once — the duplicate was removed)
+    # ---------------------------------------------------------
+    # Relationship to normal destination
+    # ---------------------------------------------------------
+
     destination_obj = relationship(
         "MostVisited",
         back_populates="packages",
+        foreign_keys=[destination_id],
     )
+
+    # ---------------------------------------------------------
+    # Relationship to seasonal destination
+    # ---------------------------------------------------------
+
+    seasoned_destination_obj = relationship(
+        "SeasonedDestination",
+        back_populates="packages",
+        foreign_keys=[seasoned_destination_id],
+    )
+
+    # ---------------------------------------------------------
+    # Relationship to package batches
+    # ---------------------------------------------------------
 
     batches = relationship(
         "PackageBatch",
@@ -414,11 +467,12 @@ class Package(Base):
 #         index=True,
 #     )
 
-#     # SQLAlchemy relationship
-#     destination_obj = relationship(
-#         "MostVisited",
-#         back_populates="packages",
-#     )
+#     seasoned_destination_id = Column(
+#      Integer,
+#     ForeignKey("seasoned_destinations.id"),
+#     nullable=True,
+#     index=True,
+# )
 
 #     # ---------------------------------------------------------
 #     # Package classification
@@ -439,6 +493,7 @@ class Package(Base):
 #         Integer,
 #         nullable=False,
 #         default=0,
+#         index=True,
 #     )
 
 #     # ---------------------------------------------------------
@@ -620,8 +675,15 @@ class Package(Base):
 #         "User",
 #     )
 
+#     # Relationship to MostVisited
 #     destination_obj = relationship(
 #         "MostVisited",
+#         back_populates="packages",
+#     )
+
+#     # Relationship to SeasonalDestination
+#     seasoned_destination_obj = relationship(
+#         "SeasonedDestination",
 #         back_populates="packages",
 #     )
 
